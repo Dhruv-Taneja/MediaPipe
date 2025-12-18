@@ -29,6 +29,7 @@ cap.set(3, 1920)
 detector = htm.handDetector(detectionCon=0.85)
 xp, yp = 0, 0
 imageCanvas = np.zeros((1080, 1920, 3), np.uint8)
+pTime = 0
 while True:
     #Import image
     success,img=cap.read()
@@ -36,15 +37,17 @@ while True:
 
     #Find hands
     img = detector.findHands(img)
-    lmList = detector.findPosition(img, draw=False) 
-    if len(lmList) !=0:
-        # print(lmList)
-
-        x1,y1= lmList[8][1:]
-        x2,y2= lmList[12][1:]
+    lmList,_ = detector.findPosition(img, draw=False) 
+    if len(lmList) != 0:
+        x1, y1 = lmList[8][1:]
+        x2, y2 = lmList[12][1:]
+    # Proceed with gesture logic
+    # else:
+    #     print("Insufficient landmarks — skipping frame.")
+    #     continue
 
         #Check which finger is up
-        fingers=detector.fingersUp(lmList)
+        fingers=detector.fingersUp()
         # print(fingers)
         #Selection mode(2 fingers up)
         if fingers[1] and fingers[2]:
@@ -89,6 +92,21 @@ while True:
     img=cv.bitwise_or(imageCanvas,img)
     #setting the header image
     img[0:198,0:1980] = header
+
+    # FPS calculation
+    cTime = time.time()
+    fps = 1 / (cTime - pTime) if (cTime - pTime) != 0 else 0
+    pTime = cTime
+
+    cv.putText(
+        img,
+        f'FPS: {int(fps)}',
+        (20, 260),
+        cv.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 0, 0),
+        2
+    )
     # img=cv.addWeighted(img, 0.5, imageCanvas, 0.5, 0)
     cv.imshow("Image", img)
     # cv.imshow("Canvas", imageCanvas) 
